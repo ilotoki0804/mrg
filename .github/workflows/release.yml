@@ -28,4 +28,4 @@ jobs:
       - name: build and publish package
         run: |
           uv build
-          uv publish -u __token__ -a "${{ secrets.PYPI_TOKEN }}"
+          uv publish -u __token__ -p "${{ secrets.PYPI_TOKEN }}"

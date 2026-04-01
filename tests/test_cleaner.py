@@ -59,8 +59,8 @@ def test_cleaner():
     assert set(dirs) == {'좋은 폴더', '나쁜 폴더', 'normal folder'}
     assert set(files) == {'나쁜 파일', '좋은 파일'}
     dirs[:] = ['좋은 폴더', '나쁜 폴더', 'normal folder']
-    assert next(walk_iter) == (root + '/좋은 폴더', [], [])
-    assert next(walk_iter) == (root + '/나쁜 폴더', [], [])
+    assert next(walk_iter) == (os.path.join(root, "좋은 폴더"), [], [])
+    assert next(walk_iter) == (os.path.join(root, "나쁜 폴더"), [], [])
     normal_folder, dirs, files = next(walk_iter)
     assert normal_folder == root + '/normal folder'
     assert dirs == []
