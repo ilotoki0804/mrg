@@ -1,0 +1,29 @@
+name: Release to PyPI
+
+on:
+  push:
+    branches:
+      - release
+
+jobs:
+  release-package:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: install dependencies
+        run: |
+          pip install -e .
+          pip install hatch
+
+      - name: build and publish package
+        run: |
+          hatch build
+          hatch publish -u __token__ -a "${{ secrets.PYPI_TOKEN }}"
