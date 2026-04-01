@@ -1,4 +1,4 @@
-import os
+import os.path
 from pathlib import Path
 import shutil
 from unicodedata import normalize
@@ -62,6 +62,6 @@ def test_cleaner():
     assert next(walk_iter) == (os.path.join(root, "좋은 폴더"), [], [])
     assert next(walk_iter) == (os.path.join(root, "나쁜 폴더"), [], [])
     normal_folder, dirs, files = next(walk_iter)
-    assert normal_folder == root + '/normal folder'
+    assert normal_folder == os.path.join(root, 'normal folder')
     assert dirs == []
     assert set(files) == {'normal file2', 'normal file'}
