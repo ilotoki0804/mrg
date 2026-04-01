@@ -18,12 +18,14 @@ jobs:
         with:
           python-version: '3.13'
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+
       - name: install dependencies
         run: |
-          pip install -e .
-          pip install hatch
+          uv sync
 
       - name: build and publish package
         run: |
-          hatch build
-          hatch publish -u __token__ -a "${{ secrets.PYPI_TOKEN }}"
+          uv build
+          uv publish -u __token__ -a "${{ secrets.PYPI_TOKEN }}"
