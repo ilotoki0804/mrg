@@ -6,18 +6,18 @@ from pathlib import Path
 from mrg._cleaner import Cleaner
 from mrg._ansi_colors import Colors as C
 
-DOT_UNDERSCORED = f"{C.BOLD}{C.UNDERLINE}._*{C.END}{C.END}"
+DOT_UNDERSCORED = f"{C.BOLD}{C.UNDERLINE}._*{C.END}"
 
 parser = argparse.ArgumentParser("MRG", usage="remove miscellaneous files produced by macOS")
 # parser.add_argument("path", nargs="?", default=Path.cwd(), type=Path, help="path to remove miscellaneous files recursively (default: current working directory)")
 parser.add_argument("path", type=Path, help="path to remove miscellaneous files recursively")
-parser.add_argument("--all", action="store_true", help=f"clean selected directory; equivalent to {C.BLUE}{C.ITALIC}--ds-store --dot-underscored --bad-unicode{C.END}{C.END}")
-parser.add_argument("--ds-store", action="store_true", help=f"delete {C.BOLD}{C.UNDERLINE}.DS_Store{C.END}{C.END} files")
+parser.add_argument("--all", action="store_true", help=f"clean selected directory; equivalent to {C.BLUE}{C.ITALIC}--ds-store --dot-underscored --bad-unicode{C.END}")
+parser.add_argument("--ds-store", action="store_true", help=f"delete {C.BOLD}{C.UNDERLINE}.DS_Store{C.END} files")
 parser.add_argument("--bad-unicode", action="store_true", help="normalize unicode characters to NFC")
 parser.add_argument("--dot", action="store_true", help=f"delete {DOT_UNDERSCORED} files")
-parser.add_argument("--dot-any-size", action="store_true", help=f"delete {DOT_UNDERSCORED} files even if it's not conventional size (implies {C.BLUE}{C.ITALIC}--dot{C.END}{C.END})")
-parser.add_argument("--dot-not-matching", action="store_true", help=f"delete {DOT_UNDERSCORED} files even if there's no corresponding native file (implies {C.BLUE}{C.ITALIC}--dot{C.END}{C.END})")
-parser.add_argument("--dot-all", action="store_true", help=f"delete all {DOT_UNDERSCORED} files; equivalent to {C.BLUE}{C.ITALIC}--dot-underscored-any-size --dot-underscored-not-matching{C.END}{C.END}")
+parser.add_argument("--dot-any-size", action="store_true", help=f"delete {DOT_UNDERSCORED} files even if it's not conventional size (implies {C.BLUE}{C.ITALIC}--dot{C.END})")
+parser.add_argument("--dot-not-matching", action="store_true", help=f"delete {DOT_UNDERSCORED} files even if there's no corresponding native file (implies {C.BLUE}{C.ITALIC}--dot{C.END})")
+parser.add_argument("--dot-all", action="store_true", help=f"delete all {DOT_UNDERSCORED} files; equivalent to {C.BLUE}{C.ITALIC}--dot-underscored-any-size --dot-underscored-not-matching{C.END}")
 parser.add_argument("--enumerate", action="store_true", help="print every cleaned/scanned files")
 parser.add_argument("--json", action="store_true", help="produce json report instead of text description")
 parser.add_argument("--follow-symlinks", action="store_true", help="follow symlinks while traversing")

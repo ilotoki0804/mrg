@@ -36,17 +36,14 @@ class Cleaner:
         self.enumerate_scanned: bool = self.enumerate_cleaned and not self.is_cleaning
 
     def clean(self) -> None:
-        D_END = f"{C.END}{C.END}"
-        T_END = f"{C.END}{C.END}{C.END}"
-
         self._initialize_counters()
         abs_base_path = str(self.base_path.absolute())
         self.bad_unicode_base_path = not is_normalized("NFC", abs_base_path)
         if self.bad_unicode_base_path:
             if self.enumerate_cleaned or self.enumerate_scanned:
-                print(f"{C.RED}{C.ITALIC}not normalized base path{D_END} {C.RED}{C.UNDERLINE}{C.BOLD}(won't be fixed automatically){T_END}{C.RED}{C.ITALIC}:{D_END} {self._path_repr(abs_base_path)}")
+                print(f"{C.RED}{C.ITALIC}not normalized base path{C.END} {C.RED}{C.UNDERLINE}{C.BOLD}(won't be fixed automatically){C.END}{C.RED}{C.ITALIC}:{C.END} {self._path_repr(abs_base_path)}")
 
-        for path, dirnames, filenames in self.base_path.walk(follow_symlinks=self.follow_symlinks):
+        for path, dirnames, filenames in self.base_path.walk(follow_symlinks=self.follow_symlinks, on_error=self._on_walk_error):
             self.scanned_files += len(filenames)
             self.scanned_dirs += len(dirnames)
 
@@ -55,13 +52,13 @@ class Cleaner:
                     dirpath = path / dirname
                     if self.replace_bad_unicode:
                         if self.enumerate_cleaned:
-                            print(f"{C.BLUE}{C.ITALIC}normalize directory name as NFC:{D_END} {self._path_repr(dirpath)}")
+                            print(f"{C.BLUE}{C.ITALIC}normalize directory name as NFC:{C.END} {self._path_repr(dirpath)}")
                         normalized_name = normalize("NFC", dirname)
                         os.rename(dirpath, path / normalized_name)
                         dirnames[i] = normalized_name
                     else:
                         if self.enumerate_scanned:
-                            print(f"{C.RED}{C.ITALIC}not normalized directory:{D_END} {self._path_repr(path / dirname)}")
+                            print(f"{C.RED}{C.ITALIC}not normalized directory:{C.END} {self._path_repr(path / dirname)}")
                     self.bad_unicode_dir += 1
 
             ds_store_found = False
@@ -71,7 +68,7 @@ class Cleaner:
                 if not is_normalized("NFC", filename):
                     if self.replace_bad_unicode:
                         if self.enumerate_cleaned:
-                            print(f"{C.BLUE}{C.ITALIC}normalize filename as NFC:{D_END} {self._path_repr(filepath)}")
+                            print(f"{C.BLUE}{C.ITALIC}normalize filename as NFC:{C.END} {self._path_repr(filepath)}")
                         normalized_name = normalize("NFC", filename)
                         normalized_path = path / normalized_name
                         os.rename(filepath, normalized_path)
@@ -79,7 +76,7 @@ class Cleaner:
                         filepath = normalized_path
                     else:
                         if self.enumerate_scanned:
-                            print(f"{C.RED}{C.ITALIC}not normalized path:{D_END} {self._path_repr(path / filename)}")
+                            print(f"{C.RED}{C.ITALIC}not normalized path:{C.END} {self._path_repr(path / filename)}")
                     self.bad_unicode_file += 1
 
                 if filename == ".DS_Store":
@@ -95,11 +92,11 @@ class Cleaner:
                 filepath = path / ".DS_Store"
                 if self.remove_ds_store:
                     if self.enumerate_cleaned:
-                        print(f"{C.BLUE}{C.ITALIC}remove .DS_Store:{D_END} {self._path_repr(filepath)}")
+                        print(f"{C.BLUE}{C.ITALIC}remove .DS_Store:{C.END} {self._path_repr(filepath)}")
                     self._unlink(filepath)
                 else:
                     if self.enumerate_scanned:
-                        print(f"{C.PURPLE}{C.ITALIC}.DS_Store file:{D_END} {self._path_repr(filepath)}")
+                        print(f"{C.PURPLE}{C.ITALIC}.DS_Store file:{C.END} {self._path_repr(filepath)}")
                 self.ds_store += 1
 
     def check_dot_underscored(self, filepath: Path, corresponding_file: bool) -> None:
@@ -131,14 +128,14 @@ class Cleaner:
 
         if will_be_cleaned:
             if self.enumerate_cleaned:
-                print(f"{C.BLUE}{C.ITALIC}remove {file_type}:{C.END}{C.END} {self._path_repr(filepath)}")
+                print(f"{C.BLUE}{C.ITALIC}remove {file_type}:{C.END} {self._path_repr(filepath)}")
             self._unlink(filepath)
         else:
             if self.enumerate_scanned:
                 if faint:
-                    print(f"{C.FAINT}{C.ITALIC}{file_type}:{C.END}{C.END} {C.FAINT}{self._path_repr(filepath)}{C.END}")
+                    print(f"{C.FAINT}{C.ITALIC}{file_type}:{C.END} {C.FAINT}{self._path_repr(filepath)}{C.END}")
                 else:
-                    print(f"{C.PURPLE}{C.ITALIC}{file_type}:{C.END}{C.END} {self._path_repr(filepath)}")
+                    print(f"{C.PURPLE}{C.ITALIC}{file_type}:{C.END} {self._path_repr(filepath)}")
 
     def print_analyzed(self) -> None:
         cleaned_dot_underscores = (
@@ -161,11 +158,9 @@ class Cleaner:
         B_BOLD = f"{C.BLUE}{C.BOLD}"
         P_BOLD = f"{C.PURPLE}{C.BOLD}"
         R_BOLD = f"{C.RED}{C.BOLD}"
-        D_END = f"{C.END}{C.END}"
-        T_END = f"{C.END}{C.END}{C.END}"
         MRG = f"{C.BOLD}mrg{C.END}"
-        DOT_UNDERSCORED = f"{C.BOLD}{C.UNDERLINE}._*{C.END}{C.END}"
-        DS_STORE = f"{C.BOLD}{C.UNDERLINE}.DS_Store{C.END}{C.END}"
+        DOT_UNDERSCORED = f"{C.BOLD}{C.UNDERLINE}._*{C.END}"
+        DS_STORE = f"{C.BOLD}{C.UNDERLINE}.DS_Store{C.END}"
 
         def wrap(
             color: Literal["green", "blue", "purple", "red", "bold", "italic", "faint"],
@@ -178,33 +173,26 @@ class Cleaner:
             match color:
                 case "green":
                     WRAPPER = G_BOLD
-                    END = D_END
                 case "blue":
                     WRAPPER = B_BOLD
-                    END = D_END
                 case "purple":
                     WRAPPER = P_BOLD
-                    END = D_END
                 case "red":
                     WRAPPER = R_BOLD
-                    END = D_END
                 case "bold":
                     WRAPPER = C.BOLD
-                    END = C.END
                 case "italic":
                     WRAPPER = C.ITALIC
-                    END = C.END
                 case "faint":
                     WRAPPER = C.FAINT
-                    END = C.END
                 case _:
                     raise ValueError(f"unknown color: {color}")
 
             if percent:
                 if count:
-                    return f"{WRAPPER}{count:.02%}{END}"
+                    return f"{WRAPPER}{count:.02%}{C.END}"
                 else:
-                    return f"{C.FAINT}{C.ITALIC}{count:.02%}{END}"
+                    return f"{C.FAINT}{C.ITALIC}{count:.02%}{C.END}"
 
             if count == 1:
                 following = f"{' ' * add_space}{singular}" if singular else ""
@@ -212,9 +200,9 @@ class Cleaner:
                 following = f"{' ' * add_space}{plural}" if plural else ""
 
             if count:
-                return f"{WRAPPER}{count}{END}{following}"
+                return f"{WRAPPER}{count}{C.END}{following}"
             else:
-                return f"{C.FAINT}{C.ITALIC}{count}{END}{following}"
+                return f"{C.FAINT}{C.ITALIC}{count}{C.END}{following}"
 
         total_scan_findings = (
             self.ds_store
@@ -240,60 +228,62 @@ class Cleaner:
         else:
             print(f'{MRG} have scanned {wrap("green", scanned_entries, "entry", "entries")} ({wrap("green", self.scanned_files, "file", "files")} and {wrap("green", self.scanned_dirs, "directory", "directories")}) without making any changes')
 
-        if total_scan_findings or self.bad_unicode_base_path:
-            print(f"{C.BOLD}{C.UNDERLINE}{C.ITALIC}Analysis:{T_END}")
+        if total_scan_findings or self.bad_unicode_base_path or self.scan_failed_dirs:
+            print(f"{C.BOLD}{C.UNDERLINE}{C.ITALIC}Analysis:{C.END}")
         else:
             print(f"{C.ITALIC}Nothing{C.END} found. What a clean directory!")
+        if self.scan_failed_dirs:
+            print(f'    {R_BOLD}Failed to scan{C.END} {wrap('red', self.scan_failed_dirs, f"{R_BOLD}directory{C.END}", f"{R_BOLD}directories{C.END}")}')
         if cleaned_files + fixed_files:
             print(f'    {wrap("blue", cleaned_or_fixed_files, "file", "files")} ({wrap("blue", cleaned_or_fixed_files / (self.scanned_files or 1), percent=True)}) and {wrap("blue", fixed_directories, "directory", "directories")} ({wrap("blue", fixed_directories / (self.scanned_dirs or 1), percent=True)}) cleaned or fixed')
         if self.ds_store:
             if self.remove_ds_store:
-                print(f'    {wrap("blue", self.ds_store, f"{DS_STORE} file has been", f"{DS_STORE} files have been")} {B_BOLD}cleaned{D_END} ({wrap("bold", self.ds_store / (self.scanned_files or 1), percent=True)})')
+                print(f'    {wrap("blue", self.ds_store, f"{DS_STORE} file has been", f"{DS_STORE} files have been")} {B_BOLD}cleaned{C.END} ({wrap("bold", self.ds_store / (self.scanned_files or 1), percent=True)})')
             else:
-                print(f'    {wrap("bold", self.ds_store, f"{DS_STORE} file has been", f"{DS_STORE} files have been")} {P_BOLD}found{D_END} ({wrap("bold", self.ds_store / (self.scanned_files or 1), percent=True)})')
+                print(f'    {wrap("bold", self.ds_store, f"{DS_STORE} file has been", f"{DS_STORE} files have been")} {P_BOLD}found{C.END} ({wrap("bold", self.ds_store / (self.scanned_files or 1), percent=True)})')
         if self.bad_unicode_base_path:
-            print(f'''    base path "{C.BOLD}{C.UNDERLINE}{self.base_path.absolute()}{D_END}" is {C.RED}not normalized{C.END} (won't be fixed automatically)''')
+            print(f'''    base path "{C.BOLD}{C.UNDERLINE}{self.base_path.absolute()}{C.END}" is {C.RED}not normalized{C.END} (won't be fixed automatically)''')
         if bad_unicode := self.bad_unicode_dir + self.bad_unicode_file:
             if self.replace_bad_unicode:
                 print(f'    {wrap("blue", bad_unicode, "entry", "entries")} ({wrap("blue", self.bad_unicode_dir, "directory", "directories")} and {wrap("blue", self.bad_unicode_file, "file", "files")}, {wrap("blue", bad_unicode / scanned_entries, percent=True)}) unicode normalized')
             else:
-                print(f'    {wrap("bold", bad_unicode, "not unicode normalized entry", "not unicode normalized entries")} ({wrap("bold", bad_unicode / scanned_entries, percent=True)}, {wrap("bold", self.bad_unicode_dir, "directory", "directories")} and {wrap("bold", self.bad_unicode_file, "file", "files")}) {P_BOLD}found{D_END}')
+                print(f'    {wrap("bold", bad_unicode, "not unicode normalized entry", "not unicode normalized entries")} ({wrap("bold", bad_unicode / scanned_entries, percent=True)}, {wrap("bold", self.bad_unicode_dir, "directory", "directories")} and {wrap("bold", self.bad_unicode_file, "file", "files")}) {P_BOLD}found{C.END}')
         if self.dot_underscored + self.dot_any_size + self.dot_not_matching + self.dot_underscored_only:
             if self.remove_dot_underscored:
-                print(f'    {wrap("blue", cleaned_dot_underscores, f"{DOT_UNDERSCORED} file has been", f"{DOT_UNDERSCORED} files have been")} {B_BOLD}cleaned{D_END} ({wrap("blue", cleaned_dot_underscores / (self.scanned_files or 1), percent=True)}) in total')
+                print(f'    {wrap("blue", cleaned_dot_underscores, f"{DOT_UNDERSCORED} file has been", f"{DOT_UNDERSCORED} files have been")} {B_BOLD}cleaned{C.END} ({wrap("blue", cleaned_dot_underscores / (self.scanned_files or 1), percent=True)}) in total')
             else:
-                print(f'    {wrap("bold", self.dot_underscored, f"{DOT_UNDERSCORED} file has been", f"{DOT_UNDERSCORED} files have been")} {P_BOLD}found{D_END} ({wrap("bold", self.dot_underscored / (self.scanned_files or 1), percent=True)})')
+                print(f'    {wrap("bold", self.dot_underscored, f"{DOT_UNDERSCORED} file has been", f"{DOT_UNDERSCORED} files have been")} {P_BOLD}found{C.END} ({wrap("bold", self.dot_underscored / (self.scanned_files or 1), percent=True)})')
 
             if self.dot_any_size + self.dot_not_matching + self.dot_underscored_only:
                 but_not_cleaned = " but not cleaned" * (self.remove_dot_underscored or self.remove_dot_any_size or self.remove_dot_not_matching)
                 print(f"    {C.ITALIC}in detail:{C.END}")
                 if self.remove_dot_underscored:
-                    print(f'        {wrap("blue", self.dot_underscored, f"{DOT_UNDERSCORED} file", f"{DOT_UNDERSCORED} files")} {B_BOLD}cleaned{D_END}')
+                    print(f'        {wrap("blue", self.dot_underscored, f"{DOT_UNDERSCORED} file", f"{DOT_UNDERSCORED} files")} {B_BOLD}cleaned{C.END}')
                 else:
-                    print(f'        {wrap("bold", self.dot_underscored, f"{DOT_UNDERSCORED} file", f"{DOT_UNDERSCORED} files")} {P_BOLD}found{D_END}{but_not_cleaned}')
+                    print(f'        {wrap("bold", self.dot_underscored, f"{DOT_UNDERSCORED} file", f"{DOT_UNDERSCORED} files")} {P_BOLD}found{C.END}{but_not_cleaned}')
 
                 if self.dot_any_size:
                     if self.remove_dot_any_size:
                         file = f"{C.RED}{C.ITALIC}not conventionally sized{C.END} {DOT_UNDERSCORED} file"
-                        print(f'        {wrap("blue", self.dot_any_size, file, file + "s")} {B_BOLD}cleaned{D_END}')
+                        print(f'        {wrap("blue", self.dot_any_size, file, file + "s")} {B_BOLD}cleaned{C.END}')
                     else:
-                        file = f"{C.RED}{C.ITALIC}{C.UNDERLINE}{C.FAINT}not conventionally sized{T_END}{C.END} {C.FAINT}._* file"
+                        file = f"{C.RED}{C.ITALIC}{C.UNDERLINE}{C.FAINT}not conventionally sized{C.END} {C.FAINT}._* file"
                         print(f'        {wrap("faint", self.dot_any_size, file, file + "s")} found{but_not_cleaned}{C.END}')
 
                 if self.dot_not_matching:
                     if self.remove_dot_not_matching:
                         file = f"{C.RED}{C.ITALIC}not matching{C.END} {DOT_UNDERSCORED} file"
-                        print(f'        {wrap("blue", self.dot_not_matching, file, file + "s")} {B_BOLD}cleaned{D_END}')
+                        print(f'        {wrap("blue", self.dot_not_matching, file, file + "s")} {B_BOLD}cleaned{C.END}')
                     else:
-                        file = f"{C.RED}{C.ITALIC}{C.UNDERLINE}{C.FAINT}not matching{T_END}{C.END} {C.FAINT}._* file"
+                        file = f"{C.RED}{C.ITALIC}{C.UNDERLINE}{C.FAINT}not matching{C.END} {C.FAINT}._* file"
                         print(f'        {wrap("faint", self.dot_not_matching, file, file + "s")} found{but_not_cleaned}{C.END}')
 
                 if self.dot_underscored_only:
                     if self.remove_dot_not_matching:
                         file = f"{C.RED}{C.ITALIC}not matching and not conventionally sized{C.END} {DOT_UNDERSCORED} file"
-                        print(f'        {wrap("blue", self.dot_underscored_only, file, file + "s")} {B_BOLD}cleaned{D_END}')
+                        print(f'        {wrap("blue", self.dot_underscored_only, file, file + "s")} {B_BOLD}cleaned{C.END}')
                     else:
-                        file = f"{C.RED}{C.ITALIC}{C.UNDERLINE}{C.FAINT}not matching and not conventionally sized{T_END}{C.END} {C.FAINT}._* file"
+                        file = f"{C.RED}{C.ITALIC}{C.UNDERLINE}{C.FAINT}not matching and not conventionally sized{C.END} {C.FAINT}._* file"
                         print(f'        {wrap("faint", self.dot_underscored_only, file, file + "s")} found{but_not_cleaned}{C.END}')
 
     def dictionary_report(self) -> dict:
@@ -325,6 +315,7 @@ class Cleaner:
         self.dot_any_size: int = 0
         self.dot_not_matching: int = 0
         self.dot_underscored_only: int = 0
+        self.scan_failed_dirs: int = 0
 
     @staticmethod
     def _unlink(file: Path):
@@ -332,4 +323,12 @@ class Cleaner:
 
     @staticmethod
     def _path_repr(path: Path | str) -> str:
-        return f"{C.UNDERLINE}{C.BOLD}{path}{C.END}{C.END}"
+        return f"{C.UNDERLINE}{C.BOLD}{path}{C.END}"
+
+    def _on_walk_error(self, error: OSError) -> None:
+        path = Path(error.filename)
+        if error_repr := str(error):
+            print(f"{C.RED}{C.ITALIC}failed to access directory {C.END}{C.RED}({C.BOLD}{type(error).__name__}{C.END}{C.RED}: {error_repr}{C.RED}):{C.END} {self._path_repr(path)}")
+        else:
+            print(f"{C.RED}{C.ITALIC}failed to access directory {C.END}{C.RED}({C.BOLD}{type(error).__name__}{C.END}{C.RED}):{C.END} {self._path_repr(path)}")
+        self.scan_failed_dirs += 1
