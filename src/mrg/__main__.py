@@ -21,6 +21,7 @@ parser.add_argument("--dot-all", action="store_true", help=f"delete all {DOT_UND
 parser.add_argument("--enumerate", action="store_true", help="print every cleaned/scanned files")
 parser.add_argument("--json", action="store_true", help="produce json report instead of text description")
 parser.add_argument("--follow-symlinks", action="store_true", help="follow symlinks while traversing")
+parser.add_argument("--version", action="version", version="0.1.0.post4")
 
 
 def main():
