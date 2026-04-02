@@ -3,6 +3,7 @@ _ignore*
 ._ignore*
 .DS_Store
 tests/files/
+homebrew-mrg
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
