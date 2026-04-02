@@ -131,14 +131,14 @@ class Cleaner:
 
         if will_be_cleaned:
             if self.enumerate_cleaned:
-                print(f"{C.BLUE}{C.ITALIC}remove {file_type}{C.END}{C.END} {self._path_repr(filepath)}")
+                print(f"{C.BLUE}{C.ITALIC}remove {file_type}:{C.END}{C.END} {self._path_repr(filepath)}")
             self._unlink(filepath)
         else:
             if self.enumerate_scanned:
                 if faint:
                     print(f"{C.FAINT}{C.ITALIC}{file_type}:{C.END}{C.END} {C.FAINT}{self._path_repr(filepath)}{C.END}")
                 else:
-                    print(f"{C.PURPLE}{C.ITALIC}{file_type}{C.END}{C.END}: {self._path_repr(filepath)}")
+                    print(f"{C.PURPLE}{C.ITALIC}{file_type}:{C.END}{C.END} {self._path_repr(filepath)}")
 
     def print_analyzed(self) -> None:
         cleaned_dot_underscores = (
