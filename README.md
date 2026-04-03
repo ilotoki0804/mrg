@@ -154,3 +154,4 @@ macOS provides a cli tool called `dot_clean` by default. Through this tool, `._*
 * <https://en.wikipedia.org/wiki/AppleSingle_and_AppleDouble_formats>
 * <https://tldr.inbrowser.app/pages.ko/osx/dot_clean>
 * <https://www.zeroonetwenty.com/blueharvest/>
+* <https://wodonggun.github.io/study/%ED%95%9C%EA%B8%80-%EC%9D%B8%EC%BD%94%EB%94%A9%EC%9D%B4%EB%9E%80.html>
