@@ -6,7 +6,7 @@
 [![Supported Python Versions](https://img.shields.io/pypi/pyversions/mrg.svg)](https://pypi.org/project/mrg/)
 [![Latest Version](https://img.shields.io/pypi/v/mrg)](https://pypi.org/project/mrg/)
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/ilotoki0804/mrg/blob/main/pyproject.toml)
-<!-- ![Hits](https://hitscounter.dev/api/hit?url=https%3A%2F%2Fgithub.com%2Filotoki0804%2mrg&label=Hits&icon=github&color=%234dc81f) -->
+![Hits](https://hitscounter.dev/api/hit?url=https%3A%2F%2Fgithub.com%2Filotoki0804%2mrg&label=Hits&icon=github&color=%234dc81f)
 
 mrg는 macOS에서 생성되는 잡다한 파일들을 제거하거나 파일명을 유니코드로 정규화할 때 사용하는 CLI 유틸리티입니다.
 

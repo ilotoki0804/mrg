@@ -6,7 +6,7 @@
 [![Supported Python Versions](https://img.shields.io/pypi/pyversions/mrg.svg)](https://pypi.org/project/mrg/)
 [![Latest Version](https://img.shields.io/pypi/v/mrg)](https://pypi.org/project/mrg/)
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/ilotoki0804/mrg/blob/main/pyproject.toml)
-<!-- ![Hits](https://hitscounter.dev/api/hit?url=https%3A%2F%2Fgithub.com%2Filotoki0804%2mrg&label=Hits&icon=github&color=%234dc81f) -->
+![Hits](https://hitscounter.dev/api/hit?url=https%3A%2F%2Fgithub.com%2Filotoki0804%2mrg&label=Hits&icon=github&color=%234dc81f)
 
 mrg is a CLI utility used to clean miscellaneous files created on macOS, or to normalize file names with Unicode.
 
