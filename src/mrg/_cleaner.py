@@ -203,7 +203,6 @@ class Cleaner:
         fixed_files = self.bad_unicode_dir.cleaned + self.bad_unicode_file.cleaned
         cleaned_or_fixed_files = cleaned_files + self.bad_unicode_file.cleaned
         fixed_directories = self.bad_unicode_dir.cleaned
-        scanned_entries = self.scanned_dirs + self.scanned_files
         total_scan_findings = (
             self.ds_store.total_entries
             + self.bad_unicode_dir.total_entries
@@ -213,92 +212,6 @@ class Cleaner:
             + self.dot_not_matching.total_entries
             + self.dot_underscored_only.total_entries
         )
-
-        def wrap(
-            color: Literal["green", "blue", "purple", "red", "bold", "italic", "faint"],
-            count: int | float,
-            singular: str | None = None,
-            plural: str | None = None,
-            add_space: bool = True,
-            percent: bool = False,
-        ) -> str:
-            match color:
-                case "green":
-                    WRAPPER = G_BOLD
-                case "blue":
-                    WRAPPER = B_BOLD
-                case "purple":
-                    WRAPPER = P_BOLD
-                case "red":
-                    WRAPPER = R_BOLD
-                case "bold":
-                    WRAPPER = C.BOLD
-                case "italic":
-                    WRAPPER = C.ITALIC
-                case "faint":
-                    WRAPPER = C.FAINT
-                case _:
-                    raise ValueError(f"unknown color: {color}")
-
-            if percent:
-                if count:
-                    return f"{WRAPPER}{count:.02%}{C.END}"
-                else:
-                    return f"{C.FAINT}{C.ITALIC}{count:.02%}{C.END}"
-
-            if count == 1:
-                following = f"{' ' * add_space}{singular}" if singular else ""
-            else:
-                following = f"{' ' * add_space}{plural}" if plural else ""
-
-            if count:
-                return f"{WRAPPER}{count}{C.END}{following}"
-            else:
-                return f"{C.FAINT}{C.ITALIC}{count}{C.END}{following}"
-
-        def entry_analysis(
-            color,
-            directories: int,
-            files: int,
-            *,
-            insert: str = "",
-            add_space: bool = True,
-            percent: bool = True,
-            insert_before_percent: str = "",
-            faint: bool = False,
-        ) -> str:
-            if insert and add_space:
-                insert += " "
-            if insert_before_percent and add_space:
-                insert_before_percent = " " + insert_before_percent
-
-            if faint:
-                if directories:
-                    raise ValueError("directories with faint is not currently implemented")
-                if not percent:
-                    raise ValueError("this should include percent")
-                if color != "faint":
-                    raise ValueError("color should be faint")
-                return f'{wrap(color, files, f"{insert}{C.FAINT}file", f"{insert}{C.FAINT}files")}{insert_before_percent} {C.FAINT}({wrap("bold", files / (self.scanned_files or 1), percent=True)}{C.FAINT}, among files){C.END}'
-
-            match directories, files:
-                # case 0, 0:
-                #     raise ValueError("this should not be evoked")
-                case 0, files:
-                    if percent:
-                        return f'{wrap(color, files, f"{insert}file", f"{insert}files")}{insert_before_percent} ({wrap("bold", files / (self.scanned_files or 1), percent=True)}, among files)'
-                    else:
-                        return f'{wrap(color, files, f"{insert}file", f"{insert}files")}{insert_before_percent}'
-                case directories, 0:
-                    if percent:
-                        return f'{wrap(color, directories, f"{insert}directory", f"{insert}directories")}{insert_before_percent} ({wrap("bold", directories / (self.scanned_dirs or 1), percent=True)}, among directories)'
-                    else:
-                        return f'{wrap(color, directories, f"{insert}directory", f"{insert}directories")}{insert_before_percent}'
-                case directories, files:
-                    if percent:
-                        return f'{wrap(color, directories, f"{insert}directory", f"{insert}directories")} and {wrap(color, files, f"{insert}file", f"{insert}files")}{insert_before_percent} ({wrap("bold", (files + directories) / (scanned_entries or 1), percent=True)}, {wrap(color, directories + files)} in total)'
-                    else:
-                        return f'{wrap(color, directories, f"{insert}directory", f"{insert}directories")} and {wrap(color, files, f"{insert}file", f"{insert}files")}{insert_before_percent} ({wrap(color, directories + files)} in total)'
 
         # print an empty line if any enumeration has been occurred
         if (
@@ -314,11 +227,11 @@ class Cleaner:
             return
 
         if cleaned_or_fixed_files + fixed_directories:
-            fix_message = f'and {B_BOLD}cleaned/normalized{C.END} {entry_analysis("bold", fixed_directories, cleaned_or_fixed_files)}'
+            fix_message = f'and {B_BOLD}cleaned/normalized{C.END} {self._entry_analysis("bold", fixed_directories, cleaned_or_fixed_files)}'
         else:
             fix_message = 'without making any changes'
         if self.scanned_dirs + self.scanned_files:
-            print(f'{MRG} have scanned {entry_analysis("green", self.scanned_dirs, self.scanned_files, percent=False)} {fix_message}')
+            print(f'{MRG} have scanned {self._entry_analysis("green", self.scanned_dirs, self.scanned_files, percent=False)} {fix_message}')
         else:
             print(f'{C.ITALIC}Given directory is empty.{C.END}')
 
@@ -327,23 +240,23 @@ class Cleaner:
         else:
             print(f"{C.GREEN}{C.ITALIC}Nothing{C.END} {C.GREEN}found. What a clean directory!{C.END}")
         if self.scan_failed_dirs:
-            print(f'    {R_BOLD}Failed to scan{C.END} {wrap('red', self.scan_failed_dirs, f"{R_BOLD}directory{C.END}", f"{R_BOLD}directories{C.END}")}')
+            print(f'    {R_BOLD}Failed to scan{C.END} {self._wrap('red', self.scan_failed_dirs, f"{R_BOLD}directory{C.END}", f"{R_BOLD}directories{C.END}")}')
         if self.bad_unicode_base_path:
             print(f'    base path "{C.BOLD}{C.UNDERLINE}{self.base_path.absolute()}{C.END}" is {C.RED}not normalized{C.END} (won\'t be fixed automatically)')
 
         if self.bad_unicode_dir.cleaned + self.bad_unicode_file.cleaned:
-            print(f'    {B_BOLD}Normalized{C.END} {entry_analysis("bold", self.bad_unicode_dir.cleaned, self.bad_unicode_file.cleaned, insert_before_percent="to NFC")}')
+            print(f'    {B_BOLD}Normalized{C.END} {self._entry_analysis("bold", self.bad_unicode_dir.cleaned, self.bad_unicode_file.cleaned, insert_before_percent="to NFC")}')
         if self.bad_unicode_dir.clean_failed + self.bad_unicode_file.clean_failed:
-            print(f'    {R_BOLD}Failed to clean{C.END} {entry_analysis("bold", self.bad_unicode_dir.clean_failed, self.bad_unicode_file.clean_failed)} to NFC')
+            print(f'    {R_BOLD}Failed to clean{C.END} {self._entry_analysis("bold", self.bad_unicode_dir.clean_failed, self.bad_unicode_file.clean_failed)} to NFC')
         if self.bad_unicode_dir.scanned + self.bad_unicode_file.scanned:
-            print(f'    {P_BOLD}Found{C.END} {entry_analysis("bold", self.bad_unicode_dir.scanned, self.bad_unicode_file.scanned, insert="not NFC normalized")}')
+            print(f'    {P_BOLD}Found{C.END} {self._entry_analysis("bold", self.bad_unicode_dir.scanned, self.bad_unicode_file.scanned, insert="not NFC normalized")}')
 
         if cleaned := self.ds_store.cleaned:
-            print(f'    {B_BOLD}Cleaned{C.END} {entry_analysis("bold", 0, cleaned, insert=DS_STORE)}')
+            print(f'    {B_BOLD}Cleaned{C.END} {self._entry_analysis("bold", 0, cleaned, insert=DS_STORE)}')
         if clean_failed := self.ds_store.clean_failed:
-            print(f'    {R_BOLD}Failed to clean{C.END} {entry_analysis("bold", 0, clean_failed, insert=DS_STORE, percent=False)}')
+            print(f'    {R_BOLD}Failed to clean{C.END} {self._entry_analysis("bold", 0, clean_failed, insert=DS_STORE, percent=False)}')
         if scanned := self.ds_store.scanned:
-            print(f'    {P_BOLD}Found{C.END} {entry_analysis("bold", 0, scanned, insert=DS_STORE)}')
+            print(f'    {P_BOLD}Found{C.END} {self._entry_analysis("bold", 0, scanned, insert=DS_STORE)}')
 
         if self.dot_underscored.total_entries + self.dot_any_size.total_entries + self.dot_not_matching.total_entries + self.dot_underscored_only.total_entries:
             dot_total_removed = self.dot_underscored.cleaned + self.dot_any_size.cleaned + self.dot_not_matching.cleaned + self.dot_underscored_only.cleaned
@@ -351,42 +264,42 @@ class Cleaner:
             # dot_total_scanned = self.dot_underscored.scanned + self.dot_any_size.scanned + self.dot_not_matching.scanned + self.dot_underscored_only.scanned
 
             if dot_total_removed:
-                print(f'    {B_BOLD}Cleaned{C.END} {entry_analysis("bold", 0, dot_total_removed, insert=DOT_UNDERSCORED)}')
+                print(f'    {B_BOLD}Cleaned{C.END} {self._entry_analysis("bold", 0, dot_total_removed, insert=DOT_UNDERSCORED)}')
             elif not dot_total_remove_failed:
-                print(f'    {P_BOLD}Found{C.END} {entry_analysis("bold", 0, self.dot_underscored.scanned, insert=DOT_UNDERSCORED)}')
+                print(f'    {P_BOLD}Found{C.END} {self._entry_analysis("bold", 0, self.dot_underscored.scanned, insert=DOT_UNDERSCORED)}')
             if dot_total_remove_failed:
-                print(f'    {R_BOLD}Failed to clean{C.END} {entry_analysis("bold", 0, dot_total_remove_failed, insert=DOT_UNDERSCORED)}')
+                print(f'    {R_BOLD}Failed to clean{C.END} {self._entry_analysis("bold", 0, dot_total_remove_failed, insert=DOT_UNDERSCORED)}')
 
             if self.dot_any_size.total_entries + self.dot_not_matching.total_entries + self.dot_underscored_only.total_entries:
                 print(f"    {C.ITALIC}in detail:{C.END}")
 
                 if cleaned := self.dot_underscored.cleaned:
-                    print(f'        {B_BOLD}Cleaned{C.END} {entry_analysis("bold", 0, cleaned, insert=DOT_UNDERSCORED)}')
+                    print(f'        {B_BOLD}Cleaned{C.END} {self._entry_analysis("bold", 0, cleaned, insert=DOT_UNDERSCORED)}')
                 if clean_failed := self.dot_underscored.clean_failed:
-                    print(f'        {R_BOLD}Failed to clean{C.END} {entry_analysis("bold", 0, clean_failed, insert=DOT_UNDERSCORED)}')
+                    print(f'        {R_BOLD}Failed to clean{C.END} {self._entry_analysis("bold", 0, clean_failed, insert=DOT_UNDERSCORED)}')
                 if found := self.dot_underscored.scanned:
-                    print(f'        {P_BOLD}Found{C.END} {entry_analysis("bold", 0, found, insert=DOT_UNDERSCORED)}')
+                    print(f'        {P_BOLD}Found{C.END} {self._entry_analysis("bold", 0, found, insert=DOT_UNDERSCORED)}')
 
                 if cleaned := self.dot_any_size.cleaned:
-                    print(f'        {B_BOLD}Cleaned{C.END} {entry_analysis("bold", 0, cleaned, insert=f"{C.RED}{C.ITALIC}not conventionally sized{C.END} {DOT_UNDERSCORED}")}')
+                    print(f'        {B_BOLD}Cleaned{C.END} {self._entry_analysis("bold", 0, cleaned, insert=f"{C.RED}{C.ITALIC}not conventionally sized{C.END} {DOT_UNDERSCORED}")}')
                 if clean_failed := self.dot_any_size.clean_failed:
-                    print(f'        {R_BOLD}Failed to clean{C.END} {entry_analysis("bold", 0, clean_failed, insert=f"{C.RED}{C.ITALIC}not conventionally sized{C.END} {DOT_UNDERSCORED}")}')
+                    print(f'        {R_BOLD}Failed to clean{C.END} {self._entry_analysis("bold", 0, clean_failed, insert=f"{C.RED}{C.ITALIC}not conventionally sized{C.END} {DOT_UNDERSCORED}")}')
                 if found := self.dot_any_size.scanned:
-                    print(f'        {C.FAINT}Found{C.END} {entry_analysis("faint", 0, found, insert=f"{C.RED}{C.ITALIC}{C.UNDERLINE}{C.FAINT}not conventionally sized{C.END} {C.FAINT}._*{C.END}", faint=True)}')
+                    print(f'        {C.FAINT}Found{C.END} {self._entry_analysis("faint", 0, found, insert=f"{C.RED}{C.ITALIC}{C.UNDERLINE}{C.FAINT}not conventionally sized{C.END} {C.FAINT}._*{C.END}", faint=True)}')
 
                 if cleaned := self.dot_not_matching.cleaned:
-                    print(f'        {B_BOLD}Cleaned{C.END} {entry_analysis("bold", 0, cleaned, insert=f"{C.RED}{C.ITALIC}not matching{C.END} {DOT_UNDERSCORED}")}')
+                    print(f'        {B_BOLD}Cleaned{C.END} {self._entry_analysis("bold", 0, cleaned, insert=f"{C.RED}{C.ITALIC}not matching{C.END} {DOT_UNDERSCORED}")}')
                 if clean_failed := self.dot_not_matching.clean_failed:
-                    print(f'        {R_BOLD}Failed to clean{C.END} {entry_analysis("bold", 0, clean_failed, insert=f"{C.RED}{C.ITALIC}not matching{C.END} {DOT_UNDERSCORED}")}')
+                    print(f'        {R_BOLD}Failed to clean{C.END} {self._entry_analysis("bold", 0, clean_failed, insert=f"{C.RED}{C.ITALIC}not matching{C.END} {DOT_UNDERSCORED}")}')
                 if found := self.dot_not_matching.scanned:
-                    print(f'        {C.FAINT}Found{C.END} {entry_analysis("faint", 0, found, insert=f"{C.RED}{C.ITALIC}{C.UNDERLINE}{C.FAINT}not matching{C.END} {C.FAINT}._*{C.END}", faint=True)}')
+                    print(f'        {C.FAINT}Found{C.END} {self._entry_analysis("faint", 0, found, insert=f"{C.RED}{C.ITALIC}{C.UNDERLINE}{C.FAINT}not matching{C.END} {C.FAINT}._*{C.END}", faint=True)}')
 
                 if cleaned := self.dot_underscored_only.cleaned:
-                    print(f'        {B_BOLD}Cleaned{C.END} {entry_analysis("bold", 0, cleaned, insert=f"{C.RED}{C.ITALIC}not matching and not conventionally sized{C.END} {DOT_UNDERSCORED}")}')
+                    print(f'        {B_BOLD}Cleaned{C.END} {self._entry_analysis("bold", 0, cleaned, insert=f"{C.RED}{C.ITALIC}not matching and not conventionally sized{C.END} {DOT_UNDERSCORED}")}')
                 if clean_failed := self.dot_underscored_only.clean_failed:
-                    print(f'        {R_BOLD}Failed to clean{C.END} {entry_analysis("bold", 0, clean_failed, insert=f"{C.RED}{C.ITALIC}not matching and not conventionally sized{C.END} {DOT_UNDERSCORED}")}')
+                    print(f'        {R_BOLD}Failed to clean{C.END} {self._entry_analysis("bold", 0, clean_failed, insert=f"{C.RED}{C.ITALIC}not matching and not conventionally sized{C.END} {DOT_UNDERSCORED}")}')
                 if found := self.dot_underscored_only.scanned:
-                    print(f'        {C.FAINT}Found{C.END} {entry_analysis("faint", 0, found, insert=f"{C.RED}{C.ITALIC}{C.UNDERLINE}{C.FAINT}not matching and not conventionally sized{C.END} {C.FAINT}._*{C.END}", faint=True)}')
+                    print(f'        {C.FAINT}Found{C.END} {self._entry_analysis("faint", 0, found, insert=f"{C.RED}{C.ITALIC}{C.UNDERLINE}{C.FAINT}not matching and not conventionally sized{C.END} {C.FAINT}._*{C.END}", faint=True)}')
 
         # if analysis_exists and not self.is_cleaning and not self.enumerate_scanned:
         #     print(f"{C.ITALIC}Note{C.END}: add --enumerate flag to examine.")
@@ -447,3 +360,91 @@ class Cleaner:
     def _enumerate(self, message: str, path: Path | str, condition: bool) -> None:
         if condition:
             print(f"{message}:{C.END} {self._path_repr(path)}")
+
+    @staticmethod
+    def _wrap(
+        color: Literal["green", "blue", "purple", "red", "bold", "italic", "faint"],
+        count: int | float,
+        singular: str | None = None,
+        plural: str | None = None,
+        add_space: bool = True,
+        percent: bool = False,
+    ) -> str:
+        match color:
+            case "green":
+                WRAPPER = G_BOLD
+            case "blue":
+                WRAPPER = B_BOLD
+            case "purple":
+                WRAPPER = P_BOLD
+            case "red":
+                WRAPPER = R_BOLD
+            case "bold":
+                WRAPPER = C.BOLD
+            case "italic":
+                WRAPPER = C.ITALIC
+            case "faint":
+                WRAPPER = C.FAINT
+            case _:
+                raise ValueError(f"unknown color: {color}")
+
+        if percent:
+            if count:
+                return f"{WRAPPER}{count:.02%}{C.END}"
+            else:
+                return f"{C.FAINT}{C.ITALIC}{count:.02%}{C.END}"
+
+        if count == 1:
+            following = f"{' ' * add_space}{singular}" if singular else ""
+        else:
+            following = f"{' ' * add_space}{plural}" if plural else ""
+
+        if count:
+            return f"{WRAPPER}{count}{C.END}{following}"
+        else:
+            return f"{C.FAINT}{C.ITALIC}{count}{C.END}{following}"
+
+    def _entry_analysis(
+        self,
+        color,
+        directories: int,
+        files: int,
+        *,
+        insert: str = "",
+        add_space: bool = True,
+        percent: bool = True,
+        insert_before_percent: str = "",
+        faint: bool = False,
+    ) -> str:
+        if insert and add_space:
+            insert += " "
+        if insert_before_percent and add_space:
+            insert_before_percent = " " + insert_before_percent
+
+        if faint:
+            if directories:
+                raise ValueError("directories with faint is not currently implemented")
+            if not percent:
+                raise ValueError("this should include percent")
+            if color != "faint":
+                raise ValueError("color should be faint")
+            return f'{self._wrap(color, files, f"{insert}{C.FAINT}file", f"{insert}{C.FAINT}files")}{insert_before_percent} {C.FAINT}({self._wrap("bold", files / (self.scanned_files or 1), percent=True)}{C.FAINT}, among files){C.END}'
+
+        match directories, files:
+            # case 0, 0:
+            #     raise ValueError("this should not be evoked")
+            case 0, files:
+                if percent:
+                    return f'{self._wrap(color, files, f"{insert}file", f"{insert}files")}{insert_before_percent} ({self._wrap("bold", files / (self.scanned_files or 1), percent=True)}, among files)'
+                else:
+                    return f'{self._wrap(color, files, f"{insert}file", f"{insert}files")}{insert_before_percent}'
+            case directories, 0:
+                if percent:
+                    return f'{self._wrap(color, directories, f"{insert}directory", f"{insert}directories")}{insert_before_percent} ({self._wrap("bold", directories / (self.scanned_dirs or 1), percent=True)}, among directories)'
+                else:
+                    return f'{self._wrap(color, directories, f"{insert}directory", f"{insert}directories")}{insert_before_percent}'
+            case directories, files:
+                if percent:
+                    return f'{self._wrap(color, directories, f"{insert}directory", f"{insert}directories")} and {self._wrap(color, files, f"{insert}file", f"{insert}files")}{insert_before_percent} ({self._wrap("bold", (files + directories) / (self.scanned_dirs + self.scanned_files or 1), percent=True)}, {self._wrap(color, directories + files)} in total)'
+                else:
+                    return f'{self._wrap(color, directories, f"{insert}directory", f"{insert}directories")} and {self._wrap(color, files, f"{insert}file", f"{insert}files")}{insert_before_percent} ({self._wrap(color, directories + files)} in total)'
