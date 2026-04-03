@@ -29,6 +29,7 @@ def test_cleaner():
     cleaner = Cleaner(
         TEST_DIR,
         enumerate_cleaned=False,
+        enumerate_error=False,
         remove_ds_store=True,
         replace_bad_unicode=True,
         remove_dot_underscored=True,

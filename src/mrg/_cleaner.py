@@ -40,6 +40,7 @@ class Cleaner:
         self,
         base_path: Path,
         enumerate_cleaned: bool,
+        enumerate_error: bool,
         remove_ds_store: bool,
         replace_bad_unicode: bool,
         remove_dot_underscored: bool,
@@ -49,6 +50,7 @@ class Cleaner:
     ) -> None:
         self.base_path: Path = base_path
         self.enumerate_cleaned: bool = enumerate_cleaned
+        self.enumerate_error: bool = enumerate_error
         self.remove_ds_store: bool = remove_ds_store
         self.replace_bad_unicode: bool = replace_bad_unicode
         self.remove_dot_underscored: bool = remove_dot_underscored
@@ -427,19 +429,20 @@ class Cleaner:
 
     def _on_walk_error(self, error: OSError) -> None:
         path = Path(error.filename)
-        if error_repr := str(error):
-            print(f"{C.RED}{C.ITALIC}failed to access directory {C.END}{C.RED}({C.BOLD}{type(error).__name__}{C.END}{C.RED}: {error_repr}):{C.END} {self._path_repr(path)}")
-        else:
-            print(f"{C.RED}{C.ITALIC}failed to access directory {C.END}{C.RED}({C.BOLD}{type(error).__name__}{C.END}{C.RED}):{C.END} {self._path_repr(path)}")
+        if self.enumerate_error:
+            if error_repr := str(error):
+                print(f"{C.RED}{C.ITALIC}failed to access directory {C.END}{C.RED}({C.BOLD}{type(error).__name__}{C.END}{C.RED}: {error_repr}):{C.END} {self._path_repr(path)}")
+            else:
+                print(f"{C.RED}{C.ITALIC}failed to access directory {C.END}{C.RED}({C.BOLD}{type(error).__name__}{C.END}{C.RED}):{C.END} {self._path_repr(path)}")
         self.scan_failed_dirs += 1
         self.scanned_dirs -= 1
 
-    @classmethod
-    def _print_error(cls, message: str, path: Path, error: BaseException) -> None:
-        if error_repr := str(error):
-            print(f"{C.RED}{C.ITALIC}{message} {C.END}{C.RED}({C.BOLD}{type(error).__name__}{C.END}{C.RED}: {error_repr}{C.RED}):{C.END} {cls._path_repr(path)}")
-        else:
-            print(f"{C.RED}{C.ITALIC}{message} {C.END}{C.RED}({C.BOLD}{type(error).__name__}{C.END}{C.RED}):{C.END} {cls._path_repr(path)}")
+    def _print_error(self, message: str, path: Path, error: BaseException) -> None:
+        if self.enumerate_error:
+            if error_repr := str(error):
+                print(f"{C.RED}{C.ITALIC}{message} {C.END}{C.RED}({C.BOLD}{type(error).__name__}{C.END}{C.RED}: {error_repr}{C.RED}):{C.END} {self._path_repr(path)}")
+            else:
+                print(f"{C.RED}{C.ITALIC}{message} {C.END}{C.RED}({C.BOLD}{type(error).__name__}{C.END}{C.RED}):{C.END} {self._path_repr(path)}")
 
     def _enumerate(self, message: str, path: Path | str, condition: bool) -> None:
         if condition:

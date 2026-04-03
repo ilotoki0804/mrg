@@ -19,6 +19,7 @@ parser.add_argument("--dot-any-size", action="store_true", help=f"delete {DOT_UN
 parser.add_argument("--dot-not-matching", action="store_true", help=f"delete {DOT_UNDERSCORED} files even if there's no corresponding native file (implies {C.BLUE}{C.ITALIC}--dot{C.END})")
 parser.add_argument("--dot-all", action="store_true", help=f"delete all {DOT_UNDERSCORED} files; equivalent to {C.BLUE}{C.ITALIC}--dot-underscored-any-size --dot-underscored-not-matching{C.END}")
 parser.add_argument("--enumerate", action="store_true", help="print every cleaned/scanned files")
+parser.add_argument("--no-enumerate-error", action="store_true", help="do not print clean/scan error")
 parser.add_argument("--json", action="store_true", help="produce json report instead of text description")
 parser.add_argument("--follow-symlinks", action="store_true", help="follow symlinks while traversing")
 parser.add_argument("--version", action="version", version="0.1.1")
@@ -31,6 +32,7 @@ def main():
     cleaner = Cleaner(
         base_path=args.path,
         enumerate_cleaned=args.enumerate,
+        enumerate_error=not args.no_enumerate_error,
         remove_ds_store=all or args.ds_store,
         replace_bad_unicode=all or args.bad_unicode,
         remove_dot_underscored=all or dot_all or args.dot or args.dot_any_size or args.dot_not_matching,
@@ -43,7 +45,7 @@ def main():
         import json
 
         report = cleaner.dictionary_report()
-        print(json.dumps(report, ensure_ascii=False))
+        print(json.dumps(report, ensure_ascii=False, indent=4))
     else:
         cleaner.print_analyzed()
 
