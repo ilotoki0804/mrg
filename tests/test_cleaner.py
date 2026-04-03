@@ -39,20 +39,52 @@ def test_cleaner():
     )
     cleaner.clean()
     assert cleaner.dictionary_report() == {
-        'scanned_files': 9,
-        'ds_store': 1,
-        'bad_unicode_base_path': False,
-        'bad_unicode_dir': 1,
-        'bad_unicode_file': 1,
-        'dot_underscored': 1,
-        'dot_any_size': 1,
-        'dot_not_matching': 1,
-        'dot_underscored_only': 1,
-        'ds_store_fixed': True,
-        'bad_unicode_fixed': True,
-        'dot_underscored_fixed': True,
-        'dot_any_size_fixed': True,
-        'dot_not_matching_fixed': True
+        "scanned_files": 9,
+        "scanned_dirs": 3,
+        "scan_failed_dirs": 0,
+        "bad_unicode_base_path": False,
+        "ds_store": {
+            "cleaned": 1,
+            "clean_failed": 0,
+            "scanned": 0,
+            "fix": True
+        },
+        "bad_unicode_dir": {
+            "cleaned": 1,
+            "clean_failed": 0,
+            "scanned": 0,
+            "fix": True
+        },
+        "bad_unicode_file": {
+            "cleaned": 1,
+            "clean_failed": 0,
+            "scanned": 0,
+            "fix": True
+        },
+        "dot_underscored": {
+            "cleaned": 1,
+            "clean_failed": 0,
+            "scanned": 0,
+            "fix": True
+        },
+        "dot_any_size": {
+            "cleaned": 1,
+            "clean_failed": 0,
+            "scanned": 0,
+            "fix": True
+        },
+        "dot_not_matching": {
+            "cleaned": 1,
+            "clean_failed": 0,
+            "scanned": 0,
+            "fix": True
+        },
+        "dot_underscored_only": {
+            "cleaned": 1,
+            "clean_failed": 0,
+            "scanned": 0,
+            "fix": True
+        }
     }
 
     walk_iter = iter(os.walk(TEST_DIR))
