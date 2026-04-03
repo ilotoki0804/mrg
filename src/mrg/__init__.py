@@ -1,3 +1,3 @@
-from mrg._cleaner import Cleaner
+from mrg._cleaner import Cleaner, CleanStatus
 
-__all__ = ["Cleaner"]
+__all__ = ["Cleaner", "CleanStatus"]
