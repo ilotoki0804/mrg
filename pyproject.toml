@@ -1,7 +1,7 @@
 [project]
 name = "mrg"
 version = "0.2.0"
-description = "MRG - Clean miscellaneous files produced by macOS"
+description = "mrg - Clean miscellaneous files created by macOS"
 license = "Apache-2.0"
 readme = "README.md"
 authors = [
@@ -12,6 +12,13 @@ keywords = [
     "macOS",
     "clean",
     "cleaner",
+    "normalize",
+    "unicode",
+    "NFC",
+    "AppleDouble",
+    "dot underscore",
+    "dot underscored",
+    "ds_store",
     "tool",
     "cli",
 ]

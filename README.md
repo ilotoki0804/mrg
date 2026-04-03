@@ -1,4 +1,4 @@
-# mrg - A tool for removing miscellaneous files created on macOS
+# mrg - Clean miscellaneous files created by macOS
 
 [![Sponsoring](https://img.shields.io/badge/Sponsoring-Patreon-blue?logo=patreon&logoColor=white)](https://www.patreon.com/ilotoki0804)
 [![Download Status](https://img.shields.io/pypi/dm/mrg)](https://pypi.org/project/mrg/)
