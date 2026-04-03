@@ -22,7 +22,7 @@ parser.add_argument("--enumerate", action="store_true", help="print every cleane
 parser.add_argument("--no-enumerate-error", action="store_true", help="do not print clean/scan error")
 parser.add_argument("--json", action="store_true", help="produce json report instead of text description")
 parser.add_argument("--follow-symlinks", action="store_true", help="follow symlinks while traversing")
-parser.add_argument("--version", action="version", version="0.1.1")
+parser.add_argument("--version", action="version", version="0.2.0")
 
 
 def main():
