@@ -1,6 +1,6 @@
 [project]
 name = "mrg"
-version = "0.2.0"
+version = "0.2.1"
 description = "mrg - Clean miscellaneous files created by macOS"
 license = "Apache-2.0"
 readme = "README.md"

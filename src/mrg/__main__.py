@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
+from mrg import version
 from mrg._cleaner import Cleaner
 from mrg._ansi_colors import Colors as C
 
@@ -22,7 +23,7 @@ parser.add_argument("--enumerate", action="store_true", help="print every cleane
 parser.add_argument("--no-enumerate-error", action="store_true", help="do not print clean/scan error")
 parser.add_argument("--json", action="store_true", help="produce json report instead of text description")
 parser.add_argument("--follow-symlinks", action="store_true", help="follow symlinks while traversing")
-parser.add_argument("--version", action="version", version="0.2.0")
+parser.add_argument("--version", action="version", version=version)
 
 
 def main():
