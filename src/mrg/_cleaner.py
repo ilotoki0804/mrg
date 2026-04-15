@@ -15,6 +15,16 @@ DOT_UNDERSCORED = f"{C.BOLD}{C.UNDERLINE}._*{C.END}"
 DS_STORE = f"{C.BOLD}{C.UNDERLINE}.DS_Store{C.END}"
 
 
+class RenameNotAffectedError(Exception):
+    def __init__(self, source: Path, dest: Path, is_dir: bool):
+        self.source = source
+        self.dest = dest
+        self.is_dir = is_dir
+
+    def __str__(self) -> str:
+        return f"tried to rename {self.source} as {self.dest} and it returned no errors, but indeed the name has not been changed"
+
+
 @dataclass
 class CleanStatus:
     cleaned: int = 0
@@ -87,16 +97,19 @@ class Cleaner:
                     if self.replace_bad_unicode:
                         normalized_name = normalize("NFC", dirname)
                         try:
-                            os.rename(dirpath, path / normalized_name)
+                            self._rename(dirpath, path / normalized_name, is_dir=True)
+                        except RenameNotAffectedError:
+                            self.bad_unicode_file.clean_failed += 1
+                            self._print_error("tried to normalize, but directory name remain unchanged", dirpath, None)
                         except OSError as error:
                             self.bad_unicode_dir.clean_failed += 1
-                            self._print_error("failed to normalize a file as NFC", path, error)
+                            self._print_error("failed to normalize directory as NFC", dirpath, error)
                         else:
                             self.bad_unicode_dir.cleaned += 1
-                            self._enumerate(f"{C.BLUE}{C.ITALIC}normalize a directory as NFC", dirpath, self.enumerate_cleaned)
+                            self._enumerate(f"{C.BLUE}{C.ITALIC}normalize directory as NFC", dirpath, self.enumerate_cleaned, to=normalized_name)
                         dirnames[i] = normalized_name
                     else:
-                        self._enumerate(f"{C.RED}{C.ITALIC}not normalized directory", path / dirname, self.enumerate_scanned)
+                        self._enumerate(f"{C.RED}{C.ITALIC}not normalized directory", dirpath, self.enumerate_scanned)
                         self.bad_unicode_dir.scanned += 1
 
             ds_store_found = False
@@ -105,22 +118,24 @@ class Cleaner:
                 filepath = path / filename
                 if not is_normalized("NFC", filename):
                     if self.replace_bad_unicode:
-                        self._enumerate(f"{C.BLUE}{C.ITALIC}normalize a file as NFC", filepath, self.enumerate_cleaned)
                         normalized_name = normalize("NFC", filename)
                         normalized_path = path / normalized_name
                         try:
-                            os.rename(filepath, normalized_path)
+                            self._rename(filepath, normalized_path, is_dir=False)
+                        except RenameNotAffectedError:
+                            self.bad_unicode_file.clean_failed += 1
+                            self._print_error("tried to normalize, but filename remain unchanged", filepath, None)
                         except OSError as error:
                             self.bad_unicode_file.clean_failed += 1
-                            self._print_error("failed to normalize a file as NFC", path, error)
+                            self._print_error("failed to normalize file as NFC", filepath, error)
                         else:
                             self.bad_unicode_file.cleaned += 1
-                            self._enumerate(f"{C.BLUE}{C.ITALIC}normalize a file as NFC", normalized_path, self.enumerate_cleaned)
+                            self._enumerate(f"{C.BLUE}{C.ITALIC}normalize file as NFC", normalized_path, self.enumerate_cleaned, to=normalized_name)
                         filename = normalized_name
                         filepath = normalized_path
                     else:
                         self.bad_unicode_file.scanned += 1
-                        self._enumerate(f"{C.BLUE}{C.ITALIC}not normalized path", filepath, self.enumerate_scanned)
+                        self._enumerate(f"{C.RED}{C.ITALIC}not normalized path", filepath, self.enumerate_scanned)
 
                 if filename == ".DS_Store":
                     ds_store_found = True
@@ -247,7 +262,7 @@ class Cleaner:
         if self.bad_unicode_dir.cleaned + self.bad_unicode_file.cleaned:
             print(f'    {B_BOLD}Normalized{C.END} {self._entry_analysis("bold", self.bad_unicode_dir.cleaned, self.bad_unicode_file.cleaned, insert_before_percent="to NFC")}')
         if self.bad_unicode_dir.clean_failed + self.bad_unicode_file.clean_failed:
-            print(f'    {R_BOLD}Failed to clean{C.END} {self._entry_analysis("bold", self.bad_unicode_dir.clean_failed, self.bad_unicode_file.clean_failed)} to NFC')
+            print(f'    {R_BOLD}Failed to normalize{C.END} {self._entry_analysis("bold", self.bad_unicode_dir.clean_failed, self.bad_unicode_file.clean_failed)} to NFC')
         if self.bad_unicode_dir.scanned + self.bad_unicode_file.scanned:
             print(f'    {P_BOLD}Found{C.END} {self._entry_analysis("bold", self.bad_unicode_dir.scanned, self.bad_unicode_file.scanned, insert="not NFC normalized")}')
 
@@ -334,11 +349,32 @@ class Cleaner:
 
     @staticmethod
     def _unlink(file: Path) -> None:
-        os.unlink(normalize("NFC", str(file)))
+        # os.unlink(normalize("NFC", str(file)))
+        os.unlink(file)
 
     @staticmethod
-    def _path_repr(path: Path | str) -> str:
-        return f"{C.UNDERLINE}{C.BOLD}{path}{C.END}"
+    def _rename(source: Path, dest: Path, is_dir: bool = True) -> None:
+        os.rename(source, dest)
+        # breakpoint()
+        if dest.name not in os.listdir(dest.parent):
+            raise RenameNotAffectedError(source, dest, is_dir)
+        # import time
+        # temp = dest.parent / f".mrg-rename-circumvention-{dest.name}-{time.time()}"
+        # try:
+        #     os.rename(source, temp)
+        #     os.rename(temp, dest)
+        # except BaseException:
+        #     if temp.exists():
+        #         os.rename(temp, dest)
+        #     raise
+
+    @staticmethod
+    def _path_repr(path: Path | str, *, red_name: bool = False) -> str:
+        if red_name:
+            assert isinstance(path, Path)
+            return f"{C.UNDERLINE}{C.BOLD}{path.parent}/{C.RED}{C.UNDERLINE}{path.name}{C.END}"
+        else:
+            return f"{C.UNDERLINE}{C.BOLD}{path}{C.END}"
 
     def _on_walk_error(self, error: OSError) -> None:
         path = Path(error.filename)
@@ -350,16 +386,21 @@ class Cleaner:
         self.scan_failed_dirs += 1
         self.scanned_dirs -= 1
 
-    def _print_error(self, message: str, path: Path, error: BaseException) -> None:
+    def _print_error(self, message: str, path: Path, error: BaseException | None) -> None:
         if self.enumerate_error:
-            if error_repr := str(error):
+            if error is None:
+                print(f"{C.RED}{C.ITALIC}{message}{C.END}{C.RED}:{C.END} {self._path_repr(path)}")
+            elif error_repr := str(error):
                 print(f"{C.RED}{C.ITALIC}{message} {C.END}{C.RED}({C.BOLD}{type(error).__name__}{C.END}{C.RED}: {error_repr}{C.RED}):{C.END} {self._path_repr(path)}")
             else:
                 print(f"{C.RED}{C.ITALIC}{message} {C.END}{C.RED}({C.BOLD}{type(error).__name__}{C.END}{C.RED}):{C.END} {self._path_repr(path)}")
 
-    def _enumerate(self, message: str, path: Path | str, condition: bool) -> None:
+    def _enumerate(self, message: str, path: Path | str, condition: bool, *, to: str | None = None) -> None:
         if condition:
-            print(f"{message}:{C.END} {self._path_repr(path)}")
+            if to:
+                print(f"{message}:{C.END} {self._path_repr(path, red_name=True)} -> {C.BOLD}{C.UNDERLINE}{to}{C.END}")
+            else:
+                print(f"{message}:{C.END} {self._path_repr(path)}")
 
     @staticmethod
     def _wrap(
