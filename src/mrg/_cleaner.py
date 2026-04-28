@@ -349,8 +349,21 @@ class Cleaner:
 
     @staticmethod
     def _unlink(file: Path) -> None:
-        # os.unlink(normalize("NFC", str(file)))
-        os.unlink(file)
+        nfc_normalized =  is_normalized("NFC", file.name)
+        try:
+            os.unlink(file)
+        except FileNotFoundError:
+            not_found = True
+        else:
+            not_found = False
+
+        if not_found:
+            if nfc_normalized:
+                # not sure whether this is needed
+                os.unlink(normalize("NFD", str(file)))
+            else:
+                os.unlink(normalize("NFC", str(file)))
+
 
     @staticmethod
     def _rename(source: Path, dest: Path, is_dir: bool = True) -> None:
